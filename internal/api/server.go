@@ -32,7 +32,7 @@ func (s *Server) Router() http.Handler {
 	r.Method("GET", "/metrics", promhttpHandler())
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Post("/init_request", s.handleInit)
+		r.Post("/init_request", s.initHandler)
 		r.Post("/tokenize", s.handleTokenize)
 		r.Post("/detokenize", s.handleDetokenize)
 		r.Post("/release_request", s.handleRelease)
@@ -61,9 +61,6 @@ func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) handleInit(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "TODO Task 17", http.StatusNotImplemented)
-}
 func (s *Server) handleTokenize(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "TODO Task 18", http.StatusNotImplemented)
 }
