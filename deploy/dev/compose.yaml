@@ -1,0 +1,26 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 5
+
+  tokenizer:
+    build:
+      context: ../..
+      dockerfile: deploy/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      TOKENIZER_LISTEN_ADDR: ":8443"
+      TOKENIZER_REDIS_MODE: "single"
+      TOKENIZER_REDIS_ADDRS: "redis:6379"
+      TOKENIZER_KMASTER_BACKEND: "aead-local"
+      TOKENIZER_AEAD_KEY_PATH: "/etc/tokenizer/kmaster"
+      TOKENIZER_LOG_LEVEL: "info"
+    ports: ["8443:8443"]
+    volumes:
+      - ./kmaster:/etc/tokenizer/kmaster:ro
