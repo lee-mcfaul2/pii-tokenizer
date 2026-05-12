@@ -3,7 +3,7 @@ package crypto
 import (
 	"fmt"
 
-	siv "github.com/secure-io/siv-go"
+	tinksiv "github.com/google/tink/go/daead/subtle"
 )
 
 const (
@@ -15,11 +15,11 @@ func Seal(key, plaintext, aad []byte) ([]byte, error) {
 	if len(key) != KeySize {
 		return nil, fmt.Errorf("key must be %d bytes, got %d", KeySize, len(key))
 	}
-	a, err := siv.NewCMAC(key)
+	a, err := tinksiv.NewAESSIV(key)
 	if err != nil {
 		return nil, fmt.Errorf("init aes-siv-cmac: %w", err)
 	}
-	return a.Seal(nil, nil, plaintext, aad), nil
+	return a.EncryptDeterministically(plaintext, aad)
 }
 
 func Open(key, sealed, aad []byte) ([]byte, error) {
@@ -29,9 +29,9 @@ func Open(key, sealed, aad []byte) ([]byte, error) {
 	if len(sealed) < SIVSize {
 		return nil, fmt.Errorf("sealed payload too short: %d < %d", len(sealed), SIVSize)
 	}
-	a, err := siv.NewCMAC(key)
+	a, err := tinksiv.NewAESSIV(key)
 	if err != nil {
 		return nil, fmt.Errorf("init aes-siv-cmac: %w", err)
 	}
-	return a.Open(nil, nil, sealed, aad)
+	return a.DecryptDeterministically(sealed, aad)
 }
