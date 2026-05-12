@@ -1,0 +1,19 @@
+# Build outputs
+/bin/
+/out/
+*.tar.gz
+
+# Test/dev
+.coverage
+coverage.out
+*.log
+
+# IDE/editor
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Local secrets / dev keys
+/dev/secrets/
+*.kmaster.bin
