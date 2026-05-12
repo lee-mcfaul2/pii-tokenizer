@@ -1,6 +1,6 @@
 # pii-tokenizer
 
-Crypto plane for the AI Agent Security Platform. Tokenizes PII via AES-GCM-SIV under per-request keys, with the per-request keys themselves wrapped by an HSM-backed `K_master`.
+Crypto plane for the AI Agent Security Platform. Tokenizes PII via AES-SIV-CMAC (RFC 5297) under per-request keys, with the per-request keys themselves wrapped by an HSM-backed `K_master`.
 
 Spec: `ai-security/docs/superpowers/specs/2026-05-12-pii-tokenizer-design.md` in the umbrella workspace.
 
