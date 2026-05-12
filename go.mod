@@ -3,6 +3,7 @@ module github.com/lee-mcfaul2/pii-tokenizer
 go 1.25.0
 
 require (
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/tink/go v1.7.0
 	github.com/hashicorp/go-kms-wrapping/v2 v2.0.22
 	github.com/hashicorp/go-kms-wrapping/wrappers/awskms/v2 v2.0.11
