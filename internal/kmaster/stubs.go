@@ -10,10 +10,6 @@ import (
 // Stubs so the package compiles before each backend is fleshed out.
 // PT9–PT12 each move one constructor out of this file into its own backend.go.
 
-func NewAEADLocal(ctx context.Context, cfg *config.Config) (Wrapper, error) {
-	return nil, fmt.Errorf("aead-local backend not yet implemented")
-}
-
 func NewVaultTransit(ctx context.Context, cfg *config.Config) (Wrapper, error) {
 	return nil, fmt.Errorf("vault-transit backend not yet implemented")
 }
