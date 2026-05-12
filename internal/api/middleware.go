@@ -6,9 +6,11 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/lee-mcfaul2/pii-tokenizer/internal/obs"
 )
 
 func RequestID(next http.Handler) http.Handler {
@@ -53,6 +55,16 @@ func Recover(logger *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func Metrics(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		next.ServeHTTP(ww, r)
+		obs.RequestsTotal.WithLabelValues(r.URL.Path, strconv.Itoa(ww.Status())).Inc()
+		obs.RequestDuration.WithLabelValues(r.URL.Path).Observe(time.Since(start).Seconds())
+	})
 }
 
 func AccessLog(logger *slog.Logger) func(http.Handler) http.Handler {

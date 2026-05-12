@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/lee-mcfaul2/pii-tokenizer/internal/obs"
 	"github.com/lee-mcfaul2/pii-tokenizer/internal/scope"
 )
 
@@ -25,11 +26,12 @@ func (s *Server) Router() http.Handler {
 	r.Use(RequestID)
 	r.Use(Recover(s.logger))
 	r.Use(AccessLog(s.logger))
+	r.Use(Metrics)
 	r.Use(ContentTypeJSON)
 
 	r.Get("/healthz", s.handleHealthz)
 	r.Get("/readyz", s.handleReadyz)
-	r.Method("GET", "/metrics", promhttpHandler())
+	r.Method("GET", "/metrics", obs.Handler())
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Post("/init_request", s.initHandler)

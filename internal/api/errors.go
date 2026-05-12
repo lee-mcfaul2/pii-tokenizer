@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/lee-mcfaul2/pii-tokenizer/internal/obs"
 )
 
 type ErrorType string
@@ -52,6 +54,7 @@ func (e ErrorType) Retriable() bool {
 }
 
 func WriteError(w http.ResponseWriter, r *http.Request, et ErrorType, msg string) {
+	obs.ErrorsTotal.WithLabelValues(string(et)).Inc()
 	traceID := r.Header.Get("X-Request-ID")
 	env := ErrorEnvelope{
 		ErrorType: string(et),
