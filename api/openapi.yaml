@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: pii-tokenizer
+  version: 0.1.0
+  description: Crypto plane for the AI Agent Security Platform.
+servers:
+  - url: http://pii-tokenizer.platform.svc.cluster.local:8443
+paths:
+  /v1/init_request:
+    post:
+      summary: Initialize a per-request K_request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitRequestBody' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/InitResponse' } } } }
+        '200': { description: Already exists, content: { application/json: { schema: { $ref: '#/components/schemas/InitResponse' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /v1/tokenize:
+    post:
+      summary: Encrypt plaintext under K_request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TokenizeBody' }
+      responses:
+        '200': { description: Token, content: { application/json: { schema: { $ref: '#/components/schemas/TokenizeResponse' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '410': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /v1/detokenize:
+    post:
+      summary: Decrypt token to plaintext
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DetokenizeBody' }
+      responses:
+        '200': { description: Plaintext, content: { application/json: { schema: { $ref: '#/components/schemas/DetokenizeResponse' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '410': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /v1/release_request:
+    post:
+      summary: Best-effort delete (TTL is the backstop)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReleaseBody' }
+      responses:
+        '204': { description: No content }
+        '400': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /healthz: { get: { summary: Liveness, responses: { '200': { description: ok } } } }
+  /readyz:  { get: { summary: Readiness, responses: { '200': { description: ok }, '503': { description: not ready } } } }
+
+components:
+  schemas:
+    InitRequestBody:
+      type: object
+      required: [request_uuid, ttl_seconds]
+      properties:
+        request_uuid: { type: string, pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' }
+        ttl_seconds:  { type: integer, minimum: 1, maximum: 86400 }
+    InitResponse:
+      type: object
+      properties:
+        request_uuid: { type: string }
+        expires_at:   { type: string, format: date-time }
+    TokenizeBody:
+      type: object
+      required: [request_uuid, type, plaintext]
+      properties:
+        request_uuid: { type: string }
+        type:         { type: string, enum: [EMAIL, PHONE, SSN, ADDRESS, POSTAL_CODE, NAME, CREDIT_CARD, IBAN, IP_ADDRESS, DOB] }
+        plaintext:    { type: string }
+    TokenizeResponse:
+      type: object
+      properties: { token: { type: string } }
+    DetokenizeBody:
+      type: object
+      required: [request_uuid, token]
+      properties:
+        request_uuid: { type: string }
+        token:        { type: string }
+    DetokenizeResponse:
+      type: object
+      properties:
+        plaintext: { type: string }
+        type:      { type: string }
+    ReleaseBody:
+      type: object
+      required: [request_uuid]
+      properties:
+        request_uuid: { type: string }
+    Error:
+      type: object
+      required: [error_type, retriable, message]
+      properties:
+        error_type: { type: string, enum: [SCOPE_NOT_FOUND, SCOPE_EXPIRED, AAD_MISMATCH, SCHEMA_VALIDATION_FAILED, INVALID_PII_TYPE, KMASTER_UNAVAILABLE, REDIS_UNAVAILABLE, INTERNAL_ERROR] }
+        retriable:  { type: boolean }
+        message:    { type: string }
+        trace_id:   { type: string }
+  responses:
+    Error:
+      description: Standard error envelope
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
