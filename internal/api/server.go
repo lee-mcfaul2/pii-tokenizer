@@ -24,6 +24,7 @@ func NewServer(s *scope.Service, logger *slog.Logger) *Server {
 func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(RequestID)
+	r.Use(Trace)
 	r.Use(Recover(s.logger))
 	r.Use(AccessLog(s.logger))
 	r.Use(Metrics)

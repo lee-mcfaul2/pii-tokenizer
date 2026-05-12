@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/lee-mcfaul2/pii-tokenizer/internal/obs"
+	"go.opentelemetry.io/otel"
 )
 
 func RequestID(next http.Handler) http.Handler {
@@ -55,6 +56,15 @@ func Recover(logger *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func Trace(next http.Handler) http.Handler {
+	tracer := otel.Tracer("pii-tokenizer")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracer.Start(r.Context(), r.URL.Path)
+		defer span.End()
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func Metrics(next http.Handler) http.Handler {
