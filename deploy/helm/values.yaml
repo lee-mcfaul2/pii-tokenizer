@@ -15,6 +15,7 @@ resources:
 
 kmaster:
   backend: aead-local
+  demoKey: ""
   aeadLocal:
     secretName: pii-tokenizer-kmaster
   vault:
