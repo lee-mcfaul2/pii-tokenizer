@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/lee-mcfaul2/pii-tokenizer/internal/obs"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 func RequestID(next http.Handler) http.Handler {
@@ -60,8 +61,14 @@ func Recover(logger *slog.Logger) func(http.Handler) http.Handler {
 
 func Trace(next http.Handler) http.Handler {
 	tracer := otel.Tracer("pii-tokenizer")
+	prop := otel.GetTextMapPropagator()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracer.Start(r.Context(), r.URL.Path)
+		// Extract W3C traceparent from inbound headers so this span links
+		// to the caller's trace (typically agent-gateway) — without
+		// extraction, every tokenizer request became its own root trace
+		// and Tempo couldn't stitch the prompt lifecycle together.
+		ctx := prop.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+		ctx, span := tracer.Start(ctx, r.URL.Path)
 		defer span.End()
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

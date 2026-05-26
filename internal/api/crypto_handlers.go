@@ -45,6 +45,10 @@ func (s *Server) tokenizeHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, ErrInvalidPIIType, "type not in enum: "+body.Type)
 		return
 	}
+	// Annotate the request span with the token-lifecycle metadata so a
+	// "follow this prompt" trace search in Tempo can pivot by request_uuid
+	// or pii.type without scanning the body (which contains plaintext).
+	annotateSpan(r, "request_uuid", body.RequestUUID, "pii.type", body.Type)
 
 	tok, err := s.scope.Tokenize(r.Context(), body.RequestUUID, body.Type, []byte(body.Plaintext))
 	if err != nil {
@@ -70,6 +74,7 @@ func (s *Server) detokenizeHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, ErrSchemaValidationFailed, "token required")
 		return
 	}
+	annotateSpan(r, "request_uuid", body.RequestUUID)
 
 	piiType, pt, err := s.scope.Detokenize(r.Context(), body.RequestUUID, body.Token)
 	if err != nil {
